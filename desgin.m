@@ -17,10 +17,12 @@ function dotState = dynamicRTBP(time, state, massParameter, eccentricity, vararg
 end
 
 
+
 function dotState = dynamicRTBPAtLibrationPoint(time, state, massParameter, eccentricity, varargin)
 % dynamic fucntions tranformed to libration point
 % HOW TO WRTIE THIS?
 end
+
 
 
 function dotState = dynamicEphemerisMice(time, state, frame, celestialBodyIDs, varargin)
@@ -36,7 +38,8 @@ function dotState = dynamicEphemerisMice(time, state, frame, celestialBodyIDs, v
 end
 
 
-function [newTime, newState] = shootingMethod()
+
+function [newTime, newState, exitflag] = shootingMethod()
 % nd - number of states dimension, should be 3 (default) or 2
 % ns - number of segment
 %
@@ -60,22 +63,38 @@ function [newTime, newState] = shootingMethod()
 %
 %   convertionFcn: convert between old and new state
 %   
-%   
+%   tolerance = [tolPosition, tolVelocity, tolInitial, tolFinal] [new units]
 %
+%   exitflag: -1. fail
+%              0. success
+%              other 
+%   
 
 %% check parameters
 
 %% numberLayer = 1, simple shooting
 while ~done
+    % 算 Jacobian 矩阵
+    % ode113 ?? 貌似比 ode45 效果更好
+    
+    % 求伪逆
+    
+    % 判断 done，达到则退出
+    
+    % 更新状态
     
 end
 
-%% numberLayer = 2, connection shooting then smoothness optimization （还不太确定如何编程，需要查文献）
+%% numberLayer = 2, connection shooting then smoothness optimization 
+%
+%（还不太确定如何编程，需要查文献）
 % 暂时搁置
+%
 while ~done
 end
 
 %% if fails
+exitflag = 0;
 
 end
 
