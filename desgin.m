@@ -47,7 +47,7 @@ end
 
 
 
-function [newTime, newState, exitflag] = ShootingCorrection()
+function [newTime, newState, exitflag] = RefineOrbit()
 % nd - number of states dimension, should be 3 (default) or 2
 % ns - number of segment
 %
@@ -79,6 +79,12 @@ function [newTime, newState, exitflag] = ShootingCorrection()
 %   
 
 %% check parameters
+end
+
+
+
+function MultipleShooting()
+%multiple shooting method in the given dynamic system
 
 %% numberLevel = 1, simple shooting
 while ~done
@@ -96,10 +102,10 @@ end
 
 %% numberLevel = 2, connection shooting then smoothness optimization 
 %
-%（还不太确定如何编程，需要查文献）
-% 暂时搁置
-%
 while ~done
+    % level-1 shooting
+    %
+    %
 end
 
 %% if fails
@@ -107,6 +113,21 @@ exitflag = 0;
 
 end
 
+function SimpleShooting(dynamicFcn, initialEpoch, initialState, finalEpoch, finalState, odeOptions)
+%simple shooting method in the given dynamic system
+% This can be used solely
+% This can be called by MultipleShooting.m for the level-1 shooting
+%
+%   see also: MultipleShooting
+
+% calculate state transition matrix
+if nargin < 6
+    odeOptions = odeset('AbsTol',1e-9,'RelTol',1e-9);
+    warning('Default propagation accuracy of 1e-9 is used.');
+end
+[] = ode113( dynamicFcn, [initialEpoch, finalEpoch], initialState, odeOptions );
+
+end
 
 
 
