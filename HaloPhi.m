@@ -31,7 +31,7 @@ Phi = zeros(6);
 finiteDifference = 1e-6;
 options = odeset('RelTol',Tol.RelTol,'AbsTol',Tol.AbsTol);
 options = odeset(options, 'MaxStep', Tol.MaxStep);
-parfor ii = 1:6
+for ii = 1:6
     if any( ii == PhiColumn )
         Y0 = [zeros(6,1); reshape(X0,6,1)];
         Y0(ii) = finiteDifference;

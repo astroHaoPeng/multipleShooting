@@ -65,8 +65,8 @@ while abs(X1(4))>Tol.CorrectionTol || abs(X1(6))>Tol.CorrectionTol
         X1(4);
         X1(6)];
     delta = -L\b; % * (0.6+0.4*rand)
-    s = fminsearch(@(s)tempfun(s,X0,delta,PhiColumn,mu,e,odeOptions), 1); % 一维线性搜索最优步长s，收敛性更好
-%     s = 1; % 固定步长为 1，速度要快一点
+%     s = fminsearch(@(s)tempfun(s,X0,delta,PhiColumn,mu,e,odeOptions), 1); % 一维线性搜索最优步长s，收敛性更好
+    s = 1; % 固定步长为 1，速度要快一点
     X0(PhiColumn(1)) = X0(PhiColumn(1)) + delta(1) * s;
     X0(PhiColumn(2)) = X0(PhiColumn(2)) + delta(2) * s;
     [T X] = ode113(@(t,X)DynamicRTBP(t,X,mu,e), [0,2*pi], X0, odeOptions);
