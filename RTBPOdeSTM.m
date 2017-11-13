@@ -61,7 +61,7 @@ for ii = 1:N
         2*dyy + (xx*(muminus1/r1cubic - mu/r2cubic + (three_mu*(two_mu + two_x - 2)^2)/(4*r2power5) - (3*(two_mu + two_x)^2*muminus1)/(4*r1power5) + 1))/kappa + (yy*((three_mu*y*(two_mu + two_x - 2))/(2*r2power5) - (3*y*(two_mu + two_x)*muminus1)/(2*r1power5)))/kappa + (zz*((three_mu*z*(two_mu + two_x - 2))/(2*r2power5) - (3*z*(two_mu + two_x)*muminus1)/(2*r1power5)))/kappa
         (yy*(muminus1/r1cubic - mu/r2cubic - (3*y^2*muminus1)/r1power5 + (three_mu*y^2)/r2power5 + 1))/kappa - 2*dxx - (zz*((3*y*z*muminus1)/r1power5 - (three_mu*y*z)/r2power5))/kappa + (xx*((three_mu*y*(two_mu + two_x - 2))/(2*r2power5) - (3*y*(two_mu + two_x)*muminus1)/(2*r1power5)))/kappa
         zz*((muminus1/r1cubic - mu/r2cubic - (3*z^2*muminus1)/r1power5 + (three_mu*z^2)/r2power5 + 1)/kappa - 1) - (yy*((3*y*z*muminus1)/r1power5 - (three_mu*y*z)/r2power5))/kappa + (xx*((three_mu*z*(two_mu + two_x - 2))/(2*r2power5) - (3*z*(two_mu + two_x)*muminus1)/(2*r1power5)))/kappa
-        reshape(HaloOde(f,Y(7:12),mu,e), 6, 1)];
+        reshape(DynamicRTBP(f,Y(7:12),mu,e), 6, 1)];
 %     if norm(dY-dYY) ~= 0
 %         disp(norm(dY-dYY)); % 验证是否相等
 %     end

@@ -47,7 +47,73 @@ end
 
 
 
-function [newTime, newState, exitflag] = RefineOrbit()
+
+function [finalEpoch, finalState, exitflag] = PositionShootingVaryFinalEpoch(dynamicFcn, initialEpoch, initialState, targetEpoch, targetState, positionTolerance, odeOptions)
+% [status: design, done]
+%simple shooting method for position in the given dynamic system
+% This is called by MultipleShooting.m for the level-1 shooting
+%
+%   fixed variables: initial epoch, initial position, target position
+%   free  variables: initlal velocity, final epoch (or propagation duration)
+%
+%   see also: MultipleShooting
+%
+% References:
+%   Howell, Kathleen C., and Henry John Pernicka. 1987. “Numerical Determination of Lissajous Trajectories in the Restricted Three-Body Problem.” Celestial Mechanics 41 (1–4):107–24. https://doi.org/10.1007/BF01238756.
+
+% check inputs
+if nargin < 7
+    odeOptions = odeset('AbsTol',1e-9,'RelTol',1e-9);
+    warning('Default propagation accuracy of 1e-9 is used.');
+end
+
+iterationNumber = 1;
+propagationDuration = targetEpoch - initialEpoch; 
+while 1
+    % calculate state transition matrix
+    tspan = initialEpoch + propagationDuration * [0, 1/2, 1]; % insert a middle point to eliminate too much redundant results
+    [allEpoch,allState] = ode113( dynamicFcn, tspan, initialState, odeOptions );
+    finalEpoch = allEpoch(end);
+    finalState = allState(end, 1:6);
+    stateTransitionMatrix = reshape( allState(end,7:42).', 6, 6 );
+    
+    % check if target is reached
+    errorFinalState = targetState(1:3) - finalState(1:3);
+    if norm(errorFinalState(1:3)) < positionTolerance
+        exitflag = 1; % success
+        break;
+    end
+    if iterationNumber > 20
+        exitflag = -1; % too much iterations
+        break;
+    end
+
+    % solve for the correction at initial state
+    finalStateDot = dynamicFcn( finalState, finalState );
+    L = [ stateTransitionMatrix( 1:3, 4:6 ), finalStateDot(1:3) ]; % ？是否也可以是 finalState(4:6)，可以节省一次调用
+    correctionAtInitialStateAndDuration = pinv(L) * errorFinalState;
+
+    % update state and duration for next iteration
+    propagationDuration = propagationDuration + correctionAtInitialStateAndDuration(4);
+    initialState(4:6) = initialState(4:6) + correctionAtInitialStateAndDuration(1:3);
+end
+
+% generate output
+finalEpoch = initialEpoch;
+finalState = initialState;
+
+end
+
+
+
+function [newTime, newState] = Convertion(directionOldToNew, oldDynamicFcn, oldTIme, oldState, newDynamic, newTime, newState)
+%convertion function that will be required by shooting method, to covert between old and new dynamic models
+% direction: 1. old -->> new
+%           -1. old <<-- new
+end
+
+
+% function [newTime, newState, exitflag] = RefineOrbit()
 % nd - number of states dimension, should be 3 (default) or 2
 % ns - number of segment
 %
@@ -79,63 +145,7 @@ function [newTime, newState, exitflag] = RefineOrbit()
 %   
 
 %% check parameters
-end
-
-
-
-function MultipleShooting()
-%multiple shooting method in the given dynamic system
-
-%% numberLevel = 1, simple shooting
-while ~done
-    % 算 Jacobian 矩阵
-    % ode113 ?? 貌似比 ode45 效果更好
-    
-    % 求伪逆
-    % The linear system given in Eq. (2.20) is underdetermined; it is common practice to use the smallest Euclidean norm to produce a good solution [134] (Parker2014, p58)
-    
-    % 判断 done，达到则退出
-    
-    % 更新状态
-    
-end
-
-%% numberLevel = 2, connection shooting then smoothness optimization 
-%
-while ~done
-    % level-1 shooting
-    %
-    %
-end
-
-%% if fails
-exitflag = 0;
-
-end
-
-function SimpleShooting(dynamicFcn, initialEpoch, initialState, finalEpoch, finalState, odeOptions)
-%simple shooting method in the given dynamic system
-% This can be used solely
-% This can be called by MultipleShooting.m for the level-1 shooting
-%
-%   see also: MultipleShooting
-
-% calculate state transition matrix
-if nargin < 6
-    odeOptions = odeset('AbsTol',1e-9,'RelTol',1e-9);
-    warning('Default propagation accuracy of 1e-9 is used.');
-end
-[] = ode113( dynamicFcn, [initialEpoch, finalEpoch], initialState, odeOptions );
-
-end
-
-
-
-function [newTime, newState] = Convertion(directionOldToNew, oldDynamicFcn, oldTIme, oldState, newDynamic, newTime, newState)
-%convertion function that will be required by shooting method, to covert between old and new dynamic models
-% direction: 1. old -->> new
-%           -1. old <<-- new
-end
+% end
 
 
 

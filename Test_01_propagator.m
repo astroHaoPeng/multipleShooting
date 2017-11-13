@@ -1,8 +1,8 @@
-function Test_01_propagator()
+% function Test_01_propagator()
 mu = 3.040229489168351e-06;
-X0 = [0.994057479631466   0.000000000000000  -0.004296775120051   0.000000000000000  -0.017253209942360  -0.000000000000000];
+X0 = 1.5*[0.994057479631466   0.000000000000000  -0.004296775120051   0.000000000000000  -0.017253209942360  -0.000000000000000];
 
-odeOptions = odeset('AbsTol',1e-13,'RelTol',1e-13,'MaxStep',0.001) ;
+odeOptions = odeset('AbsTol',1e-9,'RelTol',1e-9,'MaxStep',0.01) ;
 
 tic;
 [~,PVHalo45] = ode45(...
@@ -23,14 +23,19 @@ toc;
 %%
 figure(92);
 clf;
-plot(linspace(0,100*HaloPeriod(0,X0,mu),10001)/pi,PVHalo45(:,1),'.'); hold on;
-plot(linspace(0,100*HaloPeriod(0,X0,mu),10001)/pi,PVHalo113(:,1),'x'); hold on;
-% plot(linspace(0,50*2*pi,10001)/2/pi,PVHalo45(:,1)-PVHalo113(:,1),'.'); hold on;
+subplot(121);
+plot3(PVHalo45(:,1),PVHalo45(:,2),PVHalo45(:,3),'.-'); hold on;
+plot3(PVHalo113(:,1),PVHalo113(:,2),PVHalo113(:,3),'x-'); hold on;
+axis equal;
+subplot(122);
+% plot(linspace(0,100*HaloPeriod(0,X0,mu),10001)/pi,PVHalo45(:,1),'.'); hold on;
+% plot(linspace(0,100*HaloPeriod(0,X0,mu),10001)/pi,PVHalo113(:,1),'x'); hold on;
+plot(linspace(0,50*2*pi,10001)/2/pi,PVHalo45(:,1)-PVHalo113(:,1),'.'); hold on;
 
 max(max(abs(PVHalo45-PVHalo113)))
+set(gca,'FontSize',15);
 
-
-end
+% end
 
 
 
