@@ -6,14 +6,15 @@ function [correctedInitialEpoches, correctedInitialStates, exitflag] = MultipleS
 %   Parker, Jeffrey S., and Rodney L. Anderson. 2014. Low-Energy Lunar Trajectory Design. 1st ed. JPL Deep-Space Communications and Navigation Series, July. Wiley. http://descanso.jpl.nasa.gov/Monograph/series12_chapter.cfm?force_external=0.
 
 if nargin < 4
-    positionTolerance = 1e-10;
-    velocityTolerance = 1e-8;
+    positionTolerance = 1e-9;
+    velocityTolerance = 1e-7;
     odeOptions = odeset('AbsTol',1e-12,'RelTol',1e-12);
     disp('Default position, velocity, and propagation tolerance is used.');
-    initialPositionFixed = false; % 为 true 时较容易收敛
-    finalPositionFixed = false; % 为 true 时较难收敛
 end
-iterationNumberLevelTwoMax = 100;
+initialPositionFixed = false; % 为 true 时较容易收敛
+finalPositionFixed = false; % 为 true 时较难收敛
+
+iterationNumberLevelTwoMax = 20;
 
 segmentNumber = length(initialEpoches)-1; % the last element is the target epoch, similar to initialStates
 
@@ -22,37 +23,74 @@ correctedInitialEpoches = initialEpoches; % will be corrected by multiple shooti
 correctedInitialStates = initialStates;   % will be corrected by multiple shooting method
 while 1
     
-    %---- first level shooting ----
+    
+    %---- level-1 shooting ----
+    
     
     % simple shooting to connect position of every segment
     stateTransitionMatrixes = zeros(segmentNumber, 6, 6);
     exitflag = zeros(segmentNumber,1);
     correctedFinalStates = zeros(segmentNumber,6); % used to calculate Delta V
-    for iiSegment = 1:segmentNumber
-        [correctedInitialStates(iiSegment,:), correctedFinalStates(iiSegment,:), stateTransitionMatrixes(iiSegment,:,:), exitflagLevelOne(iiSegment)]...
-            = PositionShooting(...
-            dynamicFcn,...
-            correctedInitialEpoches(iiSegment),   correctedInitialStates(iiSegment,:),...
-            correctedInitialEpoches(iiSegment+1), correctedInitialStates(iiSegment+1,:),...
-            positionTolerance, odeOptions);
-        if exitflagLevelOne(iiSegment) ~= 1
-            exitflag = -2;
-            disp(['fail: Segment ' num2str(iiSegment) ' fails at the level 1 shooting.']);
-            break;
+    p = gcp('nocreate');
+    if ~isempty( p ) % this will test if a parpool is open, and suppress gcp to creat one
+        % use parallel
+        %   usually faster, but your dynamicFcn must support parallel computing
+        disp(['debug: level 1 shooting, using parpool with ' num2str(p.NumWorkers) ' workers']);
+        parforCorrectedInitialEpoches = correctedInitialEpoches;  % auxiliary variables for parfor, will be discarded after parfor
+        parforCorrectedInitialStates = correctedInitialStates;    % auxiliary variables for parfor, will be discarded after parfor
+        parfor iiSegment = 1:segmentNumber
+            [correctedInitialStates(iiSegment,:), correctedFinalStates(iiSegment,:), stateTransitionMatrixes(iiSegment,:,:), exitflagLevelOne(iiSegment)]...
+                = PositionShooting(...
+                dynamicFcn,...
+                correctedInitialEpoches(iiSegment),         correctedInitialStates(iiSegment,:),...
+                parforCorrectedInitialEpoches(iiSegment+1), parforCorrectedInitialStates(iiSegment+1,:),...
+                positionTolerance, odeOptions);
+            if exitflagLevelOne(iiSegment) ~= 1
+                disp(['fail: Segment ' num2str(iiSegment) ' fails at the level-1 shooting.']);
+            else
+                disp(['status: segment ' num2str(iiSegment) ' level-1 shooting success.']);
+            end
+        end
+    else
+        % use serial
+        %   slower, but good for testing and debugging
+        for iiSegment = 1:segmentNumber
+            [correctedInitialStates(iiSegment,:), correctedFinalStates(iiSegment,:), stateTransitionMatrixes(iiSegment,:,:), exitflagLevelOne(iiSegment)]...
+                = PositionShooting(...
+                dynamicFcn,...
+                correctedInitialEpoches(iiSegment),   correctedInitialStates(iiSegment,:),...
+                correctedInitialEpoches(iiSegment+1), correctedInitialStates(iiSegment+1,:),...
+                positionTolerance, odeOptions);
+            if exitflagLevelOne(iiSegment) ~= 1
+                exitflag = -2;
+                disp(['!!fail: segment ' num2str(iiSegment) ' fails at the level-1 shooting.']);
+                break;
+            else
+                disp(['status: segment ' num2str(iiSegment) ' level-1 shooting success.']);
+            end
         end
     end
-    PlotInitialState(dynamicFcn, correctedInitialEpoches, correctedInitialStates);
+    % draw level-1 shooting results
+    figure(99); clf; PlotInitialState(dynamicFcn, correctedInitialEpoches, correctedInitialStates); drawnow update;
+    
+    % test failure
     if any(exitflagLevelOne ~= 1)
+        exitflag = -2;
         break; % exitflag already set to -2 in above code
     end
     
     
-    %---- second level shooting ----
+    
+    %---- level-2 shooting ----
+    
+    
     
     % collcect the target error
     deltaVelocity = correctedFinalStates(1:segmentNumber-1,4:6) - correctedInitialStates(2:segmentNumber,4:6);
     deltaVelocity = reshape( deltaVelocity.', [], 1 );
     disp(['debug: level 2 iter ' num2str(iterationNumberLevelTwo) ' norm: ' num2str(norm(deltaVelocity))]);
+    
+    % test early stop
     if norm(deltaVelocity) < velocityTolerance
         exitflag = 1;
         break;
@@ -73,8 +111,8 @@ while 1
         v2plus  = correctedInitialStates(ii, 4:6).';
         v3minus = correctedFinalStates(ii, 4:6).';
         %
-        a2minus = dynamicFcn( correctedInitialEpoches(ii), correctedFinalStates(ii-1, :) ); a2minus = a2minus(4:6);
-        a2plus  = dynamicFcn( correctedInitialEpoches(ii), correctedInitialStates(ii, :) ); a2plus = a2plus(4:6);
+        a2minus = dynamicFcn( correctedInitialEpoches(ii), correctedFinalStates(ii-1, :).' ); a2minus = a2minus(4:6);
+        a2plus  = dynamicFcn( correctedInitialEpoches(ii), correctedInitialStates(ii, :).' ); a2plus = a2plus(4:6);
         %
         stateRelationshipMatrix( (ii-2)*3+1:(ii-2)*3+3, (ii-2)*4+1:(ii-2)*4+12 ) = [...
             -inv(stm12(1:3,4:6)),...
@@ -84,6 +122,7 @@ while 1
             inv(stm32(1:3,4:6)),...
             -stm32(1:3,4:6)\v3minus];
     end
+    %disp(stateRelationshipMatrix);
     
     % solve for the correction
     if initialPositionFixed
@@ -110,7 +149,6 @@ while 1
         correctedInitialStates(ii,1:3) = correctedInitialStates(ii,1:3) + sigma * correctionAtPositionAndEpoch((ii+indexOffset-1)*4+1:(ii+indexOffset-1)*4+3).';
     end
     iterationNumberLevelTwo = iterationNumberLevelTwo + 1;
-%     PlotInitialState(dynamicFcn, correctedInitialEpoches, correctedInitialStates);
     
     % stop after too many iterations
     if iterationNumberLevelTwo > iterationNumberLevelTwoMax
@@ -126,6 +164,11 @@ end
 % correctedInitialStates = correctedInitialStates;
 
 end
+
+
+
+
+
 
 
 
@@ -160,21 +203,20 @@ while 1
     
     % check if target is reached
     errorFinalState = targetState(1:3) - finalState(1:3);
-%     disp(['debug: position shooting: iter ' num2str(iterationNumber) ': error is ' num2str(norm(errorFinalState(1:3)))]);
+    %disp(['debug: position shooting: iter ' num2str(iterationNumber) ': error is ' num2str(norm(errorFinalState(1:3)))]);
+
+    % test early stop
     if norm(errorFinalState(1:3)) < positionTolerance
         exitflag = 1; % success
         break;
     end
     
     % solve for the correction at initial state
-    L = stateTransitionMatrix( 1:3, 4:6 ); % 
-%     L_inv = inv(stateTransitionMatrix); L_inv = L_inv(1:3,4:6); % for testing
+    L = stateTransitionMatrix( 1:3, 4:6 );
     correctionAtInitialState = ( L \ errorFinalState.' ).';
 
     % update state for next iteration
-    if iterationNumber < 3
-        sigma = 0.618;
-    end
+    sigma = 0.618;
     initialState(4:6) = initialState(4:6) + sigma * correctionAtInitialState(1:3);
     iterationNumber = iterationNumber + 1;
     
