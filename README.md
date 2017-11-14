@@ -1,4 +1,7 @@
- # In progress...
+# In progress...
+
+# Multiple Shooting Method
+A brief review of literatures can be found [here](multiple-shooting-method.md).
 
 # Sun-Earth/Moon L1 Lissajous orbit multiple shooting
 
