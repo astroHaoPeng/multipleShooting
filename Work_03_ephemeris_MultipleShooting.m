@@ -1,4 +1,9 @@
+addpath('ephemeris');
+addpath('rtbp');
+
 clear;
+
+parpool;
 
 %% define constants
 
@@ -24,8 +29,8 @@ Az = 150000e3 / lengthUnit; % [km]
 
 
 % third order guess in CRTBP (segment number is determined here)
-segmentNumber = 400;
-initialEpoches = linspace( 0, 14*2*pi, segmentNumber+1 );
+segmentNumber = 20;
+initialEpoches = linspace( 0, 2.5*2*pi, segmentNumber+1 );
 initialStates = zeros(length(initialEpoches),6);
 for ii = 1:length(initialEpoches)
     initialStates(ii,:) = LissajousThirdOrder(Position, phi, psi, Ay, Az, mu, initialEpoches(ii));

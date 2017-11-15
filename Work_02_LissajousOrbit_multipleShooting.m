@@ -1,3 +1,6 @@
+addpath('lissajous');
+addpath('rtbp');
+
 %% define constants
 
 %%% define LU, MU, TU
@@ -15,10 +18,12 @@ mu = ( 5.97219e24 + 7.34767309e22 ) / ( 1.98855e30 + 5.97219e24 + 7.34767309e22 
 Position = 'L1';
 phi = pi;
 psi = pi/2;
+% smaller
 Ay = 300000e3 / lengthUnit; % [km]
 Az = 150000e3 / lengthUnit; % [km]
-% Ay = 700000e3 / lengthUnit; % [km]
-% Az = 900000e3 / lengthUnit; % [km]
+% larger
+Ay = 700000e3 / lengthUnit; % [km]
+Az = 900000e3 / lengthUnit; % [km]
 
 % generate 3rd order orbit
 tt = linspace(0,2.5*2*pi,1001);

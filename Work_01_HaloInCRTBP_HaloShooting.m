@@ -1,3 +1,6 @@
+addpath('halo');
+addpath('rtbp');
+
 %% define constants
 
 %%% define LU, MU, TU
@@ -17,14 +20,15 @@ xL1 = LibrationPoint(mu, 'L1'); location = 'L1';
 % xL2 = LibrationPoint(mu, 'L2'); location = 'L2';
 
 % Halo orbit size Az
-amplitudeZ = 800000e3 / lengthUnit; % [LU]
+amplitudeZ = 120000e3 / lengthUnit; % [LU]
 % 3rd approximation
 initialPhase = pi;
 X3 = HaloThirdOrder(amplitudeZ,'Az',location,mu,initialPhase);
 % shooting method
 tic;
-[X0, iter] = HaloShooting( X3, [1,3,5], mu, 0, location); % do not change [1,3,5] for current
+[X0,~,~,exitflag] = HaloShooting( mu, X3, 5, 1e-9  ); % do not change [1,3,5] for current
 toc;
+disp(exitflag);
 
 %% plot to test
 
@@ -42,7 +46,7 @@ p3rd = plot3(PV(:,1),PV(:,2),PV(:,3),'.:b'); hold on;
 % shooting results
 [~,PVHalo] = ode113(...
     @(f,X)DynamicRTBP(f,X,mu,0),...
-    linspace(0,0.98*HaloPeriod(0,X0,mu),101),...
+    linspace(0,0.98*HaloPeriod(X0,mu),101),...
     X0,...
     odeset('AbsTol',1e-9,'RelTol',1e-9) );
 pC = plot3(PVHalo(:,1),PVHalo(:,2),PVHalo(:,3),'.-r'); hold on;

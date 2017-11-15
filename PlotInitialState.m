@@ -17,4 +17,5 @@ end
 axis equal;
 xlabel('x');
 ylabel('y');
+drawnow update;
 end

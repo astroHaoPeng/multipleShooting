@@ -4,6 +4,8 @@ function [correctedInitialEpoches, correctedInitialStates, exitflag] = MultipleS
 % References:
 %   Marchand, Belinda G., Kathleen C. Howell, and Roby S. Wilson. 2007. “Improved Corrections Process for Constrained Trajectory Design in the N-Body Problem.” Journal of Spacecraft and Rockets 44 (4):884–97. https://doi.org/10.2514/1.27205.
 %   Parker, Jeffrey S., and Rodney L. Anderson. 2014. Low-Energy Lunar Trajectory Design. 1st ed. JPL Deep-Space Communications and Navigation Series, July. Wiley. http://descanso.jpl.nasa.gov/Monograph/series12_chapter.cfm?force_external=0.
+%
+% see also: PositionShooting
 
 if nargin < 4
     positionTolerance = 1e-9;
@@ -71,7 +73,7 @@ while 1
         end
     end
     % draw level-1 shooting results
-    figure(99); clf; PlotInitialState(dynamicFcn, correctedInitialEpoches, correctedInitialStates); drawnow update;
+    figure(99); clf; PlotInitialState(dynamicFcn, correctedInitialEpoches, correctedInitialStates);
     
     % test failure
     if any(exitflagLevelOne ~= 1)
@@ -173,12 +175,27 @@ end
 
 
 function [correctedInitialState, correctedFinalState, correctedStateTransitionMatrix, exitflag] = PositionShooting(dynamicFcn, initialEpoch, initialState, targetEpoch, targetState, positionTolerance, odeOptions)
-% [status: design, done]
+%[correctedInitialState, correctedFinalState, correctedStateTransitionMatrix, exitflag] = PositionShooting(dynamicFcn, initialEpoch, initialState, targetEpoch, targetState, positionTolerance, odeOptions)
+%correctedInitialState = PositionShooting(dynamicFcn, initialEpoch, initialState, targetEpoch, targetState, positionTolerance)
 %simple shooting method for position in the given dynamic system
 % This is called by MultipleShooting.m for the level-1 shooting
 %
 %   fixed variables: initial epoch, initial position, target epoch, target position
-%   free  variables: initlal velocity
+%    free variables: initlal velocity
+%
+% inputs:
+%   dynamicFcn
+%   initialEpoch
+%   initialState
+%   targetEpoch
+%   targetState
+%   positionTolerance
+%   [odeOptions]: has a default value
+% outputs:
+%   correctedInitialState: shooting result
+%   correctedFinalState: final state is used by MultipleShooting, but not for most other situations.
+%   correctedStateTransitionMatrix: required by MultipleShooting to avoid recalculation.
+%   exitflag: 1 for suceess; -1 for too many iterations. (need to check more cases)
 %
 %   see also: MultipleShooting
 %
