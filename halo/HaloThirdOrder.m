@@ -1,4 +1,4 @@
-function X0 = HaloThirdOrder(A, Direction, Position, mu, phi)
+function X0 = HaloThirdOrder(A, Direction, Position, mu, phi, t)
 %function X0 = HaloThirdOrder(A, Direction, Position, mu, phi)
 % 生成Halo轨道三阶解析近似解
 %   A           振幅大小
@@ -95,7 +95,9 @@ switch Direction
         Az = A;
         Ax = sqrt((-Delta-l2*Az^2)/l1);
 end
-t = 0;
+if ~exist('t','var')
+    t = 0;
+end
 % phi = pi; % 修改为函数的输入参数
 tau1 = lambda*t + phi;
 switch Position % 默认画north halo oribt，即黄道面上的部分时间长

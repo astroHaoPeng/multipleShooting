@@ -1,6 +1,8 @@
 function [correctedInitialEpoches, correctedInitialStates, exitflag] = MultipleShooting(dynamicFcn, initialEpoches, initialStates, positionTolerance, velocityTolerance, odeOptions)
 %multiple shooting method in the given dynamic system
 %
+% This function will automatically use 'parfor' (after R2017a) if a parpool has been open outside. 
+%
 % References:
 %   Marchand, Belinda G., Kathleen C. Howell, and Roby S. Wilson. 2007. “Improved Corrections Process for Constrained Trajectory Design in the N-Body Problem.” Journal of Spacecraft and Rockets 44 (4):884–97. https://doi.org/10.2514/1.27205.
 %   Parker, Jeffrey S., and Rodney L. Anderson. 2014. Low-Energy Lunar Trajectory Design. 1st ed. JPL Deep-Space Communications and Navigation Series, July. Wiley. http://descanso.jpl.nasa.gov/Monograph/series12_chapter.cfm?force_external=0.
@@ -13,6 +15,7 @@ if nargin < 4
     odeOptions = odeset('AbsTol',1e-12,'RelTol',1e-12);
     disp('Default position, velocity, and propagation tolerance is used.');
 end
+flagAutoUseParallel = 1; % 1: use 'parfor' if find one parallel pool
 initialPositionFixed = false; % 为 true 时较容易收敛
 finalPositionFixed = false; % 为 true 时较难收敛
 
@@ -34,7 +37,7 @@ while 1
     exitflag = zeros(segmentNumber,1);
     correctedFinalStates = zeros(segmentNumber,6); % used to calculate Delta V
     p = gcp('nocreate');
-    if ~isempty( p ) % this will test if a parpool is open, and suppress gcp to creat one
+    if flagAutoUseParallel && ~isempty( p ) % this will test if a parpool is open, and suppress gcp to creat one
         % use parallel
         %   usually faster, but your dynamicFcn must support parallel computing
         disp(['debug: level 1 shooting, using parpool with ' num2str(p.NumWorkers) ' workers']);
@@ -55,7 +58,7 @@ while 1
         end
     else
         % use serial
-        %   slower, but good for testing and debugging
+        %   slower, but easier for testing, debugging, and profiling
         for iiSegment = 1:segmentNumber
             [correctedInitialStates(iiSegment,:), correctedFinalStates(iiSegment,:), stateTransitionMatrixes(iiSegment,:,:), exitflagLevelOne(iiSegment)]...
                 = PositionShooting(...

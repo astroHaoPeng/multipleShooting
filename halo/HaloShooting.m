@@ -1,4 +1,5 @@
-function [correctedInitialState, correctedFinalState, correctedStateTransitionMatrix, exitflag, iter] = HaloShooting(mu, initialState, fixedID, tolerance, odeOptions)
+function [correctedInitialState, correctedFinalState, correctedStateTransitionMatrix, exitflag, iter] = ...
+    HaloShooting(mu, initialState, fixedID, tolerance, odeOptions)
 %correctedInitialState = HaloShooting(mu, initialState)
 %[correctedInitialState, correctedFinalState, correctedStateTransitionMatrix, exitflag, iter] = HaloShooting(mu, initialState, fixedID, tolerance, odeOptions)
 %

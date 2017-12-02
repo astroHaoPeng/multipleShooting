@@ -64,7 +64,8 @@ toc;
 figure(93);
 PlotInitialState(@(t,X)DynamicRTBP(t,X,mu,0), correctedInitialEpoches, correctedInitialStates);
 
-
+%% generate nominal orbit
+[nominalT, nominalX] = GenerateNominalOrbit(@(t,X)DynamicRTBP(t,X,mu,0), correctedInitialEpoches, correctedInitialStates);
 
 
 
