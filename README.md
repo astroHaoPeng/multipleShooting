@@ -20,6 +20,7 @@ A brief review of literatures can be found [here](multiple-shooting-method.md).
 
 ## Sun-Earth System
 | ![](demos/Test_02_CRTBP.gif) | ![](demos/Test_02_Ephemeris.gif) | 
+|-------------|---------|
 | `./demons/Demo_02_SunEarthMoon_Lissajous_CRTBP.m` | `./demons/Demo_03_SunEarthMoon_Lissajous_Ephemeris.m` |
 
 ## Earth-Moon System
