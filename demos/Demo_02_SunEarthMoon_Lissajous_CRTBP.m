@@ -1,5 +1,10 @@
-addpath('lissajous');
-addpath('rtbp');
+% NEED MORE COMMENTS
+
+%%
+addpath('../lissajous');
+addpath('../rtbp');
+addpath('../');
+clear;
 
 %% define constants
 

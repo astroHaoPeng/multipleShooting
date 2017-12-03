@@ -1,12 +1,20 @@
+%Demonstration of multiple-shooting method to generate Halo orbits in the Earth-Moon system.
+%
 % 1. generate 3rd order approximation of Halo orbit
 % 2. shoot Halo in CRTBP
 % 3. refine in ephemeris model using multiple-shooting
+%
+%Could be used for Sun-Earth/Moon system by
+% using corresponding 'lengthUnit', 'timeUnit'
+% using corresponding frame kernels 'SE_EarthCenteredRotation.fk', 'EarthCenteredInertial.fk'
 
 
 %%
-addpath('ephemeris','-begin');
-addpath('halo','-begin');
-addpath('rtbp','-begin');
+addpath('../ephemeris','-begin');
+addpath('../halo','-begin');
+addpath('../rtbp','-begin');
+addpath('../common','-begin');
+addpath('../','-begin');
 clear;
 % parpool;
 
@@ -21,32 +29,37 @@ gmEarth = cspice_bodvrd( 'Earth', 'GM', 1 ); % [km^3/s^2]
 gmMoon = cspice_bodvrd( 'Moon', 'GM', 1 ); % [km^3/s^2]
 
 % define LU, TU, VU (mass unit is useless here), and mass parameter (mu)
-% Earth-Moon system.
+%%% Earth-Moon system.
 lengthUnit = 0.3844e9; % [m] % https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html
 timeUnit = sqrt( (lengthUnit/1e3)^3 / (gmEarth+gmMoon) ); % [s]
 velocityUnit = lengthUnit / timeUnit; % [m/s]
 mu = gmMoon / ( gmEarth + gmMoon );
 disp('# In Earth-Moon system...');
 %
-% Sun-Earth/Moon
-% lengthUnit = 
-% timeUnit = 
+%%% Sun-Earth/Moon system.
+% lengthUnit = 149.60e9; % [m] % https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html
+% timeUnit = sqrt( (lengthUnit/1e3)^3 / (gmSun+gmEarth+gmMoon) ); % [s]
 % velocityUnit = lengthUnit / timeUnit; % [m/s]
-% mu = 
+% mu = ( gmEarth + gmMoon ) / ( gmSun + gmEarth + gmMoon );
+% disp('# In Sun-Earth/Moon system...');
 
-%% generate Halo 3rd order approximation for shooting
+
+%% generate Halo 3rd order approximation
+
 location = 'L2';
 phi = 0;
+
 Az = 12000e3 / lengthUnit; % [m] --> [LU]
 
 % segment information
 segmentNumber = 30;
+
 initialEpoches = linspace( 0, 5*2*pi, segmentNumber+1 );
 
 % third order guess in CRTBP (segment number is determined here)
 initialStatesThirdOrder = zeros(length(initialEpoches),6);
 for ii = 1:length(initialEpoches)
-    initialStatesThirdOrder(ii,:) = HaloThirdOrder(Az, 'Az', location, mu, phi, initialEpoches(ii));
+    [initialStatesThirdOrder(ii,:),period] = HaloThirdOrder(Az, 'Az', location, mu, phi, initialEpoches(ii));
 end
 % show 3rd order orbit
 figure(93); clf;
@@ -55,20 +68,21 @@ X = zeros(length(tt),6);
 for ii = 1:length(tt)
     X(ii,:) = HaloThirdOrder(Az, 'Az', location, mu, phi, tt(ii));
 end
-plot3(X(:,1),X(:,2),X(:,3),'.-'); hold on;
+plot3(X(:,1),X(:,2),X(:,3),'-'); hold on;
 plot3(X(1,1),X(1,2),X(1,3),'b*'); hold on;
 plot3(X(end,1),X(end,2),X(end,3),'ro'); hold on;
 xlabel('x'); ylabel('y'); zlabel('z'); axis equal;
 
-% shoot Halo in CRTBP
-initialStatesCRTBP = HaloShooting(mu, initialStatesThirdOrder(1,:), 3, 1e-9);
-odeOptions = odeset('AbsTol',1e-6,'RelTol',1e-6); 
-period = HaloPeriod(initialStatesCRTBP,mu,odeOptions);
+
+%% shoot in CRTBP
+initialStatesCRTBP = HaloShooting(mu, initialStatesThirdOrder(1,:), period, 3, 1e-7);
+odeOptions = odeset('AbsTol',1e-9,'RelTol',1e-9); 
+period = HaloPeriod(initialStatesCRTBP,mu,odeOptions); 
 [tempT,tempX] = ode113(@(t,X)DynamicRTBP(t,X,mu,0),...
     linspace( initialEpoches(1), initialEpoches(1)+period, 1001 ),...
     initialStatesCRTBP,...
     odeOptions);
-% interpolate resulted Halo in CRTBP
+% interpolate resulted Halo in CRTBP 
 initialStates = interp1( tempT, tempX, mod(initialEpoches,period) );
 %
 % [another choice is to directly refine in the ephemeris model, but might need more segments]
@@ -79,7 +93,7 @@ figure(93);
 PlotInitialState(@(t,X)DynamicRTBP(t,X,mu,0), initialEpoches, initialStates);
 
 
-%% multiple-shooting in moon-centered inertial
+%% multiple-shooting in moon-centered inertial ephemeris model
 cspice_kclear;
 spiceKernelList = {'lsk/naif0011.tls',  'spk/planets/de432s.bsp',  'pck/gm_de431.tpc', ...
     'EM_MoonCenteredRotation.fk',  'MoonCenteredInertial.fk'};
@@ -118,7 +132,7 @@ tic;
 [correctedInitialEpoches, correctedInitialStates, exitflag] = MultipleShooting(fcn, initialEphmerisEpoches, initialEphemerisStatesECI, positionTolerance, velocityTolerance, odeOptions);
 toc;
 
-% %% draw in dimensional results
+%% draw in dimensional results
 figure(92); 
 clf;
 tic;
@@ -139,6 +153,7 @@ for ii = 1:length(correctedInitialEpoches)-1
     ylabel('y [km]');
     zlabel('z [km]');
 end
+grid on;
 toc;
 
 

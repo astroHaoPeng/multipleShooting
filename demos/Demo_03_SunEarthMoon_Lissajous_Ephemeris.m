@@ -1,9 +1,11 @@
-addpath('ephemeris');
-addpath('rtbp');
+% NEED MORE COMMENTS
 
+
+%%
+addpath('../ephemeris');
+addpath('../rtbp');
+addpath('../');
 clear;
-
-parpool;
 
 %% define constants
 
@@ -65,12 +67,12 @@ axis equal;
 %% convert to earth
 
 cspice_kclear;
-miceRootFolder = '/Users/GroupMacBai/Codes/Tools/SPICE/generic_kernels/';
-cspice_furnsh([miceRootFolder 'lsk/naif0011.tls']);
-cspice_furnsh([miceRootFolder 'spk/planets/de432s.bsp']);
-cspice_furnsh([miceRootFolder 'pck/gm_de431.tpc']);
-cspice_furnsh('EarthCenteredRotation.fk');
-cspice_furnsh('EarthCenteredInertial.fk');
+spiceKernelList = {'lsk/naif0011.tls',  'spk/planets/de432s.bsp',  'pck/gm_de431.tpc', ...
+    'SEM_EarthCenteredRotation.fk',  'EarthCenteredInertial.fk'};
+cspice_kclear;
+for ii = 1:length(spiceKernelList)
+    cspice_furnsh(which(spiceKernelList{ii}));
+end
 
 % nondimensionanl --> dimensional
 % after conversion, assumed in EMBR mice frame
@@ -118,8 +120,8 @@ for ii = 1:length(correctedInitialEpoches)-1
     
 %     subplot(121)
     plot3(plotX(:,1),plotX(:,2),plotX(:,3),'-'); hold on;
-    if ii == 1; plot3(plotX(1,1),plotX(1,2),plotX(1,3),'b*'); hold on; end
-    if ii == length(correctedInitialEpoches)-1; plot3(plotX(end,1),plotX(end,2),plotX(end,3),'ro'); hold on; end
+    plot3(plotX(1,1),plotX(1,2),plotX(1,3),'b*'); hold on;
+    plot3(plotX(end,1),plotX(end,2),plotX(end,3),'ro'); hold on;
     axis equal;
     xlabel('x');
     ylabel('y');

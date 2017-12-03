@@ -7,7 +7,7 @@ movietimer = tic;
 M = 121;
 
 a = linspace( 0, 360, M );
-b = [linspace( 20, 60, round(M/2) ), linspace( 60, 20, M-round(M/2) )];
+b = [linspace( 5, 30, round(M/2) ), linspace( 30, 0, M-round(M/2) )];
 
 set(gca,'FontSize',15);
 
@@ -29,6 +29,6 @@ for ii = 1:M % 画三维
     kk = kk + 1;
     
 end
-imwrite(figX,Map,'Test_02_Ephemeris.gif','LoopCount',Inf,'DelayTime',0);
+imwrite(figX,Map,'Test_02_VL_Ephemeris.gif','LoopCount',Inf,'DelayTime',0);
 
 toc(movietimer);

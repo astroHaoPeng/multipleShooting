@@ -16,6 +16,7 @@ function Xdot = DynamicEphemerisInertial(et,X,inertialFrameCenter,gravityBodies,
 %       Xdot: acceleration, usually in [km/s^2]
 %
 %   created by PH at 2017-12-01 17:44 UTC-4 @Rutgers:  
+%   updated by PH at 2017-12-03 16:05 UTC-4 @Rutgers: update STM calculation, faster now
 
 %% input check and initialization
 
@@ -32,10 +33,7 @@ end
 
 % creat jacobian if input X is 42
 if length(X)==42
-    jacobian = zeros(36,1);
-    for ii = 1:6
-        jacobian((ii-1)*6+1:(ii-1)*6+3) = X(ii*6+4:ii*6+6);
-    end
+    jacobianLowerLeft = zeros(3,3);
 elseif length(X)~=6
     error('Input X should be 6x1');
 end
@@ -57,7 +55,6 @@ for ii = 1:length(gravityBodies)
     if length(GM)<ii || isempty(GM(ii)) % using persistent variables, just extract all GM for only one, which can greatly speedup
         GM(ii) = cspice_bodvrd( targ, 'GM', 1 ); % [km^3/s^2]
     end
-%     P = cspice_spkezr( targ, et, 'J2000', 'None', inertialFrameCenter ); % [km, km/s] % state of gravity body
     P = cspice_spkpos( targ, et, 'J2000', 'None', inertialFrameCenter ); % [km, km/s] % state of gravity body
     % P has been tested, cannot be further speedup by using persistent variables
 
@@ -73,39 +70,52 @@ for ii = 1:length(gravityBodies)
     end
     
     %-------------------------------
-    % first order vairation equation
-    if length(X) > 6
-        px = P(1);
+    % Jacobian matrix, or first order vairation equation, or Phi, or STM (state transition matrix)
+    % The same for center body and perturbation body ! Because only position of satellite is varied.
+    % It should be in the form:
+    %   0   0   0   1   0   0
+    %   0   0   0   0   1   0
+    %   0   0   0   0   0   1
+    %   Uxx Uxy Uxz 0   0   0
+    %   Uyx Uyy Uyz 0   0   0
+    %   Uzx Uzy Uzz 0   0   0
+    % so, only the lower left corner is accumulated through different gravitational bodies
+    if length(X) == 42
+        px = P(1); % planet x
         py = P(2);
         pz = P(3);
-        Rpower3 = ((px - x)^2 + (py - y)^2 + (pz - z)^2)^(3/2);
-        Rpower5 = ((px - x)^2 + (py - y)^2 + (pz - z)^2)^(5/2);
-        threeGM = 3*GM(ii);
+        Rpower3 = ((px - x)^2 + (py - y)^2 + (pz - z)^2)^(3/2); % term to speedup
+        Rpower5 = ((px - x)^2 + (py - y)^2 + (pz - z)^2)^(5/2); % term to speedup
+        threeGM = 3*GM(ii); % term to speedup
         
-        for jj = 1:6
-            phix = X(jj*6+1);
-            phiy = X(jj*6+2);
-            phiz = X(jj*6+3);
-            %phivx = X(jj*6+4); % not used
-            %phivy = X(jj*6+5);
-            %phivz = X(jj*6+6);
-            
-            jacobian((jj-1)*6+4:(jj-1)*6+6) = jacobian((jj-1)*6+4:(jj-1)*6+6)...
-                + [...
-                    (threeGM*phiy*(py - y)*(px - x))/(Rpower5) - phix*(GM(ii)/Rpower3 - (threeGM*(px - x)*(px - x))/(Rpower5)) + (threeGM*phiz*(pz - z)*(px - x))/(Rpower5)
-                    (threeGM*phix*(px - x)*(py - y))/(Rpower5) - phiy*(GM(ii)/Rpower3 - (threeGM*(py - y)*(py - y))/(Rpower5)) + (threeGM*phiz*(pz - z)*(py - y))/(Rpower5)
-                    (threeGM*phix*(px - x)*(pz - z))/(Rpower5) - phiz*(GM(ii)/Rpower3 - (threeGM*(pz - z)*(pz - z))/(Rpower5)) + (threeGM*phiy*(py - y)*(pz - z))/(Rpower5)
-                    ];
-        end
+        % Uxx--Uzz in lower left corner
+        jacobianLowerLeft(1,1) = jacobianLowerLeft(1,1) + (threeGM*(px - x)*(px - x))/(Rpower5) - GM(ii)/Rpower3;
+        jacobianLowerLeft(1,2) = jacobianLowerLeft(1,2) + (threeGM*(py - y)*(px - x))/(Rpower5);
+        jacobianLowerLeft(1,3) = jacobianLowerLeft(1,3) + (threeGM*(pz - z)*(px - x))/(Rpower5);
+        jacobianLowerLeft(2,1) = jacobianLowerLeft(1,2);
+        jacobianLowerLeft(2,2) = jacobianLowerLeft(2,2) + (threeGM*(py - y)*(py - y))/(Rpower5) - GM(ii)/Rpower3;
+        jacobianLowerLeft(2,3) = jacobianLowerLeft(2,3) + (threeGM*(pz - z)*(py - y))/(Rpower5);
+        jacobianLowerLeft(3,1) = jacobianLowerLeft(1,3);
+        jacobianLowerLeft(3,2) = jacobianLowerLeft(2,3);
+        jacobianLowerLeft(3,3) = jacobianLowerLeft(3,3) + (threeGM*(pz - z)*(pz - z))/(Rpower5) - GM(ii)/Rpower3;
     end
+    
 end
 
 
 
 %% output
-Xdot = [X(4:6); a];
-if length(X) == 42
-    Xdot = [Xdot; jacobian];
+if length(X) == 6
+    % only acceloration
+    Xdot = [X(4:6); a];
+    
+elseif length(X) == 42
+    % acceloration and state transition matrix
+    jacobian = [zeros(3),          eye(3);
+                jacobianLowerLeft, zeros(3)];
+    stateTransitionMatrix = jacobian * reshape(X(7:42),6,6);
+    Xdot = [X(4:6); a; reshape(stateTransitionMatrix,36,1)];
+    
 end
 
 end

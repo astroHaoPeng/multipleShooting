@@ -1,34 +1,50 @@
-addpath('halo');
-addpath('rtbp');
+%Demonstration of generating Halo orbit in the Sun-Earth/Moon CRTBP
+%
+% 1. 3rd order approximation of Halo
+% 2. simple shooting, vary two of three nonzero components in 
+%    initial contion[x0, 0, z0, 0, vy0, 0], but default we keep z0 fixed.
+% 3. draw and show.
+%
+%Limits:
+% see HaloShooting.m
+
+
+%%
+addpath('../halo');
+addpath('../rtbp');
+addpath('../');
+clear;
 
 %% define constants
 
 %%% define LU, MU, TU
-lengthUnit = 149598261e3; % [m] 
-massUnit = 1.98855e30 + 5.97219e24 + 7.34767309e22; % [kg]
-% timeUnit = 
-
-%%% mass parameter
-% Earth+Moon / Sun+Earth+Moon
-mu = ( 5.97219e24 + 7.34767309e22 ) / ( 1.98855e30 + 5.97219e24 + 7.34767309e22 );
+gmSun = 1.3271e+11; % [km^3/s^2] % extracted from 'gm_de431.tpc', approximately
+gmEarth = 3.9860e+05; % [km^3/s^2]
+gmMoon = 4.9028e+03; % [km^3/s^2]
+%%% Sun-Earth/Moon system.
+lengthUnit = 149.60e9; % [m] % https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html
+timeUnit = sqrt( (lengthUnit/1e3)^3 / (gmSun+gmEarth+gmMoon) ); % [s]
+velocityUnit = lengthUnit / timeUnit; % [m/s]
+mu = ( gmEarth + gmMoon ) / ( gmSun + gmEarth + gmMoon );
+disp('# In Sun-Earth/Moon system...');
 
 
 %% generate Halo in CRTBP
 
 %
-xL1 = LibrationPoint(mu, 'L1'); location = 'L1';
-% xL2 = LibrationPoint(mu, 'L2'); location = 'L2';
+% xL1 = LibrationPoint(mu, 'L1'); location = 'L1';
+xL2 = LibrationPoint(mu, 'L2'); location = 'L2';
 
 % Halo orbit size Az
 amplitudeZ = 120000e3 / lengthUnit; % [LU]
 % 3rd approximation
 initialPhase = pi;
-X3 = HaloThirdOrder(amplitudeZ,'Az',location,mu,initialPhase);
+[X3,initialPeriod] = HaloThirdOrder(amplitudeZ,'Az',location,mu,initialPhase);
 % shooting method
 tic;
-[X0,~,~,exitflag] = HaloShooting( mu, X3, 5, 1e-9  ); % do not change [1,3,5] for current
+[X0,~,~,exitflag] = HaloShooting( mu, X3, initialPeriod, 3, 1e-9  ); % do not change [1,3,5] for current
 toc;
-disp(exitflag);
+% disp(exitflag);
 
 %% plot to test
 

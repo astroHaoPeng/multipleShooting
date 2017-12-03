@@ -40,7 +40,7 @@ while 1
     if flagAutoUseParallel && ~isempty( p ) % this will test if a parpool is open, and suppress gcp to creat one
         % use parallel
         %   usually faster, but your dynamicFcn must support parallel computing
-        disp(['debug: level 1 shooting, using parpool with ' num2str(p.NumWorkers) ' workers']);
+        disp(['#    level-1 shooting begin... (using ' num2str(p.NumWorkers) ' workers)']);
         parforCorrectedInitialEpoches = correctedInitialEpoches;  % auxiliary variables for parfor, will be discarded after parfor
         parforCorrectedInitialStates = correctedInitialStates;    % auxiliary variables for parfor, will be discarded after parfor
         parfor iiSegment = 1:segmentNumber
@@ -51,14 +51,15 @@ while 1
                 parforCorrectedInitialEpoches(iiSegment+1), parforCorrectedInitialStates(iiSegment+1,:),...
                 positionTolerance, odeOptions);
             if exitflagLevelOne(iiSegment) ~= 1
-                disp(['fail: Segment ' num2str(iiSegment) ' fails at the level-1 shooting.']);
+                disp(['# !!! fail: segment ' num2str(iiSegment) ' fails at level-1 shooting.']);
             else
-                disp(['status: segment ' num2str(iiSegment) ' level-1 shooting success.']);
+                disp(['#      segment ' num2str(iiSegment) ' done.']);
             end
         end
     else
         % use serial
         %   slower, but easier for testing, debugging, and profiling
+        disp(['#    level-1 position shooting begin...']);
         for iiSegment = 1:segmentNumber
             [correctedInitialStates(iiSegment,:), correctedFinalStates(iiSegment,:), stateTransitionMatrixes(iiSegment,:,:), exitflagLevelOne(iiSegment)]...
                 = PositionShooting(...
@@ -67,14 +68,14 @@ while 1
                 correctedInitialEpoches(iiSegment+1), correctedInitialStates(iiSegment+1,:),...
                 positionTolerance, odeOptions);
             if exitflagLevelOne(iiSegment) ~= 1
-                exitflag = -2;
-                disp(['!!fail: segment ' num2str(iiSegment) ' fails at the level-1 shooting.']);
+                disp(['# !!! fail: segment ' num2str(iiSegment) ' fails at the level-1 shooting.']);
                 break;
             else
-                disp(['status: segment ' num2str(iiSegment) ' level-1 shooting success.']);
+                disp(['#      segment ' num2str(iiSegment) ' done.']);
             end
         end
     end
+    disp(['#    level-1 done.']);
     % draw level-1 shooting results
     figure(99); clf; PlotInitialState(dynamicFcn, correctedInitialEpoches, correctedInitialStates);
     
@@ -93,11 +94,12 @@ while 1
     % collcect the target error
     deltaVelocity = correctedFinalStates(1:segmentNumber-1,4:6) - correctedInitialStates(2:segmentNumber,4:6);
     deltaVelocity = reshape( deltaVelocity.', [], 1 );
-    disp(['debug: level 2 iter ' num2str(iterationNumberLevelTwo) ' norm: ' num2str(norm(deltaVelocity))]);
+    disp(['#  level-2 iter ' num2str(iterationNumberLevelTwo) ' norm: ' num2str(norm(deltaVelocity))]);
     
     % test early stop
     if norm(deltaVelocity) < velocityTolerance
         exitflag = 1;
+        disp(['# multiple-shooting success. norm(dV) = ' num2str(norm(deltaVelocity))]);
         break;
     end
     
@@ -158,7 +160,7 @@ while 1
     % stop after too many iterations
     if iterationNumberLevelTwo > iterationNumberLevelTwoMax
         exitflag = -1;
-        disp(['fail: level 2 shooting exceeds maximum iteration number ' num2str(iterationNumberLevelTwoMax) '.']);
+        disp(['#  !!! fail: level-2 shooting exceeds maximum iteration number ' num2str(iterationNumberLevelTwoMax) '.']);
         break;
     end
     

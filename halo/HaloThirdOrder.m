@@ -1,4 +1,4 @@
-function X0 = HaloThirdOrder(A, Direction, Position, mu, phi, t)
+function [X0, period] = HaloThirdOrder(A, Direction, Position, mu, phi, t)
 %function X0 = HaloThirdOrder(A, Direction, Position, mu, phi)
 % 生成Halo轨道三阶解析近似解
 %   A           振幅大小
@@ -50,6 +50,7 @@ c4 = c(4);
 lambda = roots([1 0 c2-2 0 -(c2-1)*(1+2*c2)]);
 lambda = lambda(logical((imag(lambda)==0).*(lambda>0)));
 k = 2*lambda/(lambda^2+1-c2);
+period = 2*pi/lambda;
 
 d1 = 3*lambda^2/k*(k*(6*lambda^2-1)-2*lambda);
 d2 = 8*lambda^2/k*(k*(11*lambda^2-1)-2*lambda);
