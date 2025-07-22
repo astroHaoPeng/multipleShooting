@@ -1,4 +1,5 @@
 %Demonstration of multiple-shooting method to generate vertical Lyapunov orbits in the Earth-Moon system.
+% `Demo_12_EarthMoon_VerticalLyapunov`: Vertical Lyapunov orbit in both CRTBP and Moon-centered inertial frame.
 %
 % 1. generate 3rd order approximation of vertical Lyapunov orbit
 % 2. shoot in CRTBP
@@ -130,6 +131,7 @@ fcn = @(t,X)DynamicEphemerisInertial(t,X,'Moon',{'Sun','Venus','Mercury','Earth'
 positionTolerance = 0.01; % [km]
 velocityTolerance = 0.0001; % [km/s]
 odeOptions = odeset('AbsTol',1e-9,'RelTol',1e-9);
+gcp(); % Open a parallel pool for `parfor`
 tic;
 [correctedInitialEpoches, correctedInitialStates, exitflag] = MultipleShooting(fcn, initialEphmerisEpoches, initialEphemerisStatesECI, positionTolerance, velocityTolerance, odeOptions);
 toc;

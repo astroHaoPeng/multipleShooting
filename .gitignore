@@ -1,1 +1,2 @@
-*.fk
+# Matlab autosaves
+*.asv

@@ -71,7 +71,7 @@ Ax = Ay/k;
 
 tau1 = lambda*t + phi;
 tau2 = nu*t + psi;
-switch Position % 默认画north halo oribt，即黄道面上的部分时间长
+switch Position % This is default to northern groups.
     case {'L1'}
         sigma = 1; % or -1, switch function
     case {'L2'}

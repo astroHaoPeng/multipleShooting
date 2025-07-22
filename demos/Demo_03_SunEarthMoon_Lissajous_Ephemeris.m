@@ -1,11 +1,11 @@
-% NEED MORE COMMENTS
+% `Demo_03_SunEarthMoon_Lissajous_Ephemeris.m`: Generate Lissajous orbit in Earth-centered inertial (ECI) Ephemeris model using third-order approximation and multiple shooting method.
 
 
-%%
-addpath('../ephemeris');
-addpath('../rtbp');
-addpath('../');
-clear;
+%% add necessary paths
+tmpExcludingExtension = {'.git', '.svn'}; % to exclude paths containing these extensions
+tmpAllPaths = strsplit(genpath('../'), pathsep); % all paths
+tmpAllPathsFiltered = strjoin(tmpAllPaths(~contains(tmpAllPaths, tmpExcludingExtension)), pathsep); % filtering the path
+addpath(tmpAllPathsFiltered);
 
 %% define constants
 
@@ -39,6 +39,7 @@ for ii = 1:length(initialEpoches)
 end
 
 % % shooting in CRTBP
+% gcp(); % Open a parallel pool for `parfor`
 % tic;
 % [initialEpoches, initialStates, exitflag] = MultipleShooting(@(t,X)DynamicRTBP(t,X,mu,0), initialEpoches0, initialStates0);
 % toc;
@@ -94,13 +95,14 @@ end
 
 % draw orbit in ECI frame
 % fcn = @(t,X)DynamicEphemerisInertial(t,X,'Earth',{'Sun','Earth','Moon'});
-fcn = @(t,X)DynamicEphemerisInertial(t,X,'Earth',{'Sun','Venus','Mercury','Earth','Moon','4','5','6','7','8'});
+fcn = @(t,X)DynamicEphemerisInertial(t,X,'Earth',{'Sun','Venus','Mercury','Earth','Moon','4','5','6','7','8'}, spiceKernelList);
 PlotInitialState(fcn, initialEphmerisEpoches, initialEphemerisStatesECI, odeset('AbsTol',1e-9,'RelTol',1e-9) );
 
 %% shooting
 positionTolerance = 0.01; % [km]
 velocityTolerance = 0.0001; % [km/s]
 odeOptions = odeset('AbsTol',1e-6,'RelTol',1e-6);
+gcp(); % Open a parallel pool for `parfor`
 tic;
 [correctedInitialEpoches, correctedInitialStates, exitflag] = MultipleShooting(fcn, initialEphmerisEpoches, initialEphemerisStatesECI, positionTolerance, velocityTolerance, odeOptions);
 toc;

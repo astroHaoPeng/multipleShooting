@@ -1,11 +1,11 @@
 function [X0, period] = HaloThirdOrder(A, Direction, Position, mu, phi, t)
 %function X0 = HaloThirdOrder(A, Direction, Position, mu, phi)
-% 生成Halo轨道三阶解析近似解
-%   A           振幅大小
-%   Dirction    振幅方向，为'Ax'或者'Az'
+% Generates a third-order analytical approximate solution for the Halo orbit
+%   A           Amplitude
+%   Dirction    Dirction amplitude direction, either 'Ax' or 'Az'
 %   Position    L1 or L2
 %   mu
-%   phi         在轨道上的初始相位，0 为左侧，pi 为右侧
+%   phi         Initial phase on the orbit, 0 for the left, pi for the right (where see from above)
 
 % Modified by PH
 % Modified Date: 20130930
@@ -19,11 +19,11 @@ if nargin == 0
     A = 145000/L_e2s;
     Direction = 'Az';
     Position = 'L1';
-elseif nargin == 3 % 当不输入 phi 时，默认给出左侧的起始点，与之前的调用相符
+elseif nargin == 3 % When phi is not given, the default is the starting point on the left, which is consistent with the previous call
     phi = 0; 
 end
 
-%% 计算L1位置 L2位置
+%% Calculate L1 position L2 position
 switch Position
     case {'L1'}
         gamma = roots([1 -(3-mu) 3-2*mu -mu  2*mu -mu]);
@@ -33,11 +33,11 @@ switch Position
         gamma = gamma(imag(gamma)==0);
 end
 
-%% 重新规一划
+%% Re-regularization
 A = A/gamma;
 
-%% 计算三阶近似解的各项系数
-% 参考文献：Richardson 1969
+%% Calculate the coefficients of the third-order approximate solution, according to the reference:
+% David L. Richardson, "Analytic Construction of Periodic Orbits about the Collinear Points”, Celestial Mechanics, vol. 22, Oct. 1980, pp. 241–253.
 switch Position
     case {'L1'}
         c = @(n)(        mu + (-1)^n*(1-mu)*gamma^(n+1)/(1-gamma)^(n+1) ) / gamma^3;
@@ -50,7 +50,7 @@ c4 = c(4);
 lambda = roots([1 0 c2-2 0 -(c2-1)*(1+2*c2)]);
 lambda = lambda(logical((imag(lambda)==0).*(lambda>0)));
 k = 2*lambda/(lambda^2+1-c2);
-period = 2*pi/lambda;
+period = 2*pi/lambda; % <--------- This is the 3rd-order approximated period.
 
 d1 = 3*lambda^2/k*(k*(6*lambda^2-1)-2*lambda);
 d2 = 8*lambda^2/k*(k*(11*lambda^2-1)-2*lambda);
@@ -84,7 +84,7 @@ l1 = a1 + 2*lambda^2*s1;
 l2 = a2 + 2*lambda^2*s2;
 Delta = lambda^2 - c2;
 
-%% 根据给定的是Ax还是Az生成Halo轨道的三阶近似解
+%% The third-order approximate solution for generating Halo orbits depending on whether `Ax` or `Az` is given
 switch Direction
     case {'Xmax'}
         Ax = A-1;
@@ -99,9 +99,8 @@ end
 if ~exist('t','var')
     t = 0;
 end
-% phi = pi; % 修改为函数的输入参数
 tau1 = lambda*t + phi;
-switch Position % 默认画north halo oribt，即黄道面上的部分时间长
+switch Position % The default is the north halo oribt, whose part above the x-z plane is longer.
     case {'L1'}
         sigma = 1; % or -1, switch function
     case {'L2'}
@@ -117,7 +116,7 @@ Vx = (Ax*sin(tau1) - 2*(a23*Ax^2-a24*Az^2)*sin(2*tau1) - 3*(a31*Ax^3-a32*Ax*Az^2
 Vy = (k*Ax*cos(tau1) + 2*(b21*Ax^2-b22*Az^2)*cos(2*tau1) + 3*(b31*Ax^3-b32*Ax*Az^2)*cos(3*tau1))*lambda;
 Vz = sigma*(-Az*sin(tau1)-2*d21*Ax*Az*sin(2*tau1)-3*(d32*Ax^2*Az-d31*Az^3)*sin(3*tau1))*lambda;
 
-%% 输出三阶近似Halo轨道的初始值，恢复到RCTBP的坐标系下
+%% Output the initial value of the third-order approximate Halo orbit and restore it to the CR3BP coordinate system
 X0 = [x; y; z; Vx; Vy; Vz];
 X0 = gamma.*X0;
 switch Position
@@ -126,9 +125,5 @@ switch Position
     case {'L2'}
         X0(1) = X0(1) + 1 - mu + gamma;
 end
-
-%% 输出积分得到的半周期
-% 这样直接解析近似得到的不收敛
-% HlafPeriod0 = pi/lambda;
 
 end

@@ -1,4 +1,5 @@
 function [outT, outX] = PlotInitialState(dynamicFcn,t,X,odeOptions)
+%% Plot segmented trajectory with initial condition for each segment saved in `t` and `X`.
 
 for ii = 1:size(X,1)-1
     if nargin==4
@@ -6,7 +7,7 @@ for ii = 1:size(X,1)-1
     else
         [plotT,plotX] = ode113(dynamicFcn,[t(ii),t(ii+1)],X(ii,:));
     end
-    
+
     if nargout == 0
         plot3(plotX(:,1),plotX(:,2),plotX(:,3),'-'); hold on;
         plot3(plotX(1,1),plotX(1,2),plotX(1,3),'b*'); hold on;

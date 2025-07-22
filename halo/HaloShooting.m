@@ -1,6 +1,8 @@
 function [correctedInitialState, correctedFinalState, correctedStateTransitionMatrix, exitflag, iter] = ...
     HaloShooting(mu, initialState, period, fixedID, tolerance, odeOptions)
 %correctedInitialState = HaloShooting(mu, initialState)
+% Shooting method particulalry for Halo orbit in CR3BP.
+%
 %[correctedInitialState, correctedFinalState, correctedStateTransitionMatrix, exitflag, iter] = HaloShooting(mu, initialState, fixedID, tolerance, odeOptions)
 %
 %inputs:
@@ -22,8 +24,6 @@ function [correctedInitialState, correctedFinalState, correctedStateTransitionMa
 %   The initial condition must be in the form [x0, 0, z0, 0, vy0, 0], i.e., must start from x-z plane.
 %   
 %
-%生成Halo轨道专用的打靶法
-%
 % Last modified by PH at 2013-10-09:1547
 % last modified by PH at 2013-10-12:1046 加入了最大迭代次数的限制，当超过最大迭代次数时，输出空数组
 % last modified by PH at 2013-10-23:2225 加入一维线性搜索
@@ -39,7 +39,7 @@ if any( initialState([2,4,6]) > 1e-6 )
     error('Initial condition should be on x-z plane.');
 end
 
-if nargin < 5
+if nargin < 6
     % ? default integration tolerance
     odeOptions = odeset('RelTol',1e-9, 'AbsTol',1e-9);
     if nargin < 4
@@ -66,12 +66,10 @@ initialState = reshape(initialState,6,1);
 
 disp('# Halo shooting begin...');
 iter = 1;
-% odeOptions = odeset(odeOptions, 'Events',@(t,X)HaloEventFirstCross(t,X,initialState));
 while 1 
     
     % propagation
-%     [~, tempState] = ode113(@(t,X)DynamicRTBP(t,X,mu,0), [0,pi/2,pi], [initialState;reshape(eye(6),[],1)], odeOptions);
-    [~, tempState] = ode113(@(t,X)DynamicRTBP(t,X,mu,0), [0,period/2], [initialState;reshape(eye(6),[],1)]);
+    [~, tempState] = ode113(@(t,X)DynamicRTBP(t,X,mu,0), [0,period/2], [initialState;reshape(eye(6),[],1)], odeOptions);
     finalState = tempState(end,1:6);
     %plot3(tempState(:,1),tempState(:,2),tempState(:,3),'.-'); hold on; axis equal; pause;
     
@@ -127,44 +125,3 @@ correctedStateTransitionMatrix = stateTransitionMatrix;
 
 
 end
-
-
-
-% it will be more reasonable without using events
-
-% function [value,isterminal,direction] = HaloEventFirstCross(f,X,X0)
-% % [value,isterminal,direction] = HaloEventFirstCross(f,X,X0)
-% % 第一次与x-z平面相交
-% % 
-% % last modified by PH at 2013-10-12:1046
-% % last modified by PH at 2013-11-27:1711 修改了注释部分，加入调用方法
-% % last modified by PH at 2013-11-27:1958
-% % 修改了对 direction 的赋值逻辑，与Position无关，第二次相次，应该与初始值的方向相同即可。
-% % 要求输入初始值 X0
-% % last modified by PH at 2013-11-28:2033 更新了根据 X0 对位置的判断，可以兼容 Halo 的左右两侧
-% 
-% 
-% % 输入检测
-% if ischar(X0)
-%     error('We have changed: use X0 to replace Position value!');
-% end
-% 
-% % 以 y 为事件值
-% value = X(2);
-% 
-% % 终止
-% isterminal = 1;
-% 
-% % 根据 X0 判断对应的 Halo 轨道的位置
-% % 以及是位于 Halo 轨道与 x-z 平面的交点是在 Left 还是 Right
-% if X0(1)<1.05 && X0(3)>0 && X0(5)>0
-%     direction = -1; % 第一次相交，则 dy/dt 方向应该和初始值的 dy/dt 相反
-% elseif X0(1)<1.05 && X0(3)<0 && X0(5)<0
-%     direction = 1;
-% elseif X0(1)>0.95 && X0(3)<0 && X0(5)>0
-%     direction = -1;
-% elseif X0(1)>0.95 && X0(3)>0 && X0(5)<0
-%     direction = 1;
-% end
-% 
-% end

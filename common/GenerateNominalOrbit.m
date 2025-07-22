@@ -1,4 +1,6 @@
 function [outT, outX] = GenerateNominalOrbit(dynamicFcn,t,X,odeOptions)
+%% Generate segmented trajectory with initial condition for each segment saved in `t` and `X`.
+%   The difference to `PlotInitialState.m` is this function doesn't plot.
 
 for ii = 1:size(X,1)-1
     if nargin==4

@@ -1,14 +1,15 @@
 function period = HaloPeriod(X0, mu, odeOptions)
 %Calculate period of Halo orbit defined by X0.
-%period = HaloPeriod(X0, mu)
-%period = HaloPeriod(X0, mu, odeOptions)
-%
 % X0 should be a point on Halo. But it can be any point on the Halo. 
-% So HaloShooting should be first used be generate a perfect Halo orbit. 
+% So `HaloShooting` must be first used be generate a perfect Halo orbit.
 %
+%   1. Find the previous cross with x-z plane;
+%   2. Propagate until the next cross.
+%   3. Double the propagated time, which is the period.
 %
-% 计算给定初始条件 t0, X0 的 Halo 轨道的周期
-%   X0 可以是 Halo 轨道上的任意点。
+%   period = HaloPeriod(X0, mu)
+%   period = HaloPeriod(X0, mu, odeOptions)
+%
 %
 % see also: HaloShooting
 
@@ -40,7 +41,7 @@ end
 
 
 function [value,isterminal,direction] = PrivateFirstCross(f,X,X0)
-%private function to stop propagation when corss with x-z plan, where y == 0.
+%private function to stop propagation when corss with x-z plane, where y == 0.
 value = X(2);
 isterminal = 1;
 direction = 0;

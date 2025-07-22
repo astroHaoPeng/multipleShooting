@@ -1,21 +1,20 @@
 function Xdot = DynamicRTBP(f,X,mu,e)
-% Restricted Three-Body Problem 动力学方程
+% Dynamics equation for the Restricted Three-Body Problem.
+%   The true anomaly is the independent variable; For CRTBP it is the normalized time, for ERTBP it is just the angle.
 %
-%   以真近点角为独立变量；CRTBP 时即为时间，ERTBP 时为角度
-%
-%   调用格式：
-%       Xdot = RTBPOde(f,X,mu,e,number_vectors,delta_f)
+%   Call:
+%       Xdot = DynamicRTBP(f,X,mu,e)
 %
 %   Input:
 %       f,X,mu,e:   
-%       number_vectors: 向量化计算时 X 中包含的点数
-%       delta_f:        向量化的各段与输入的时刻 f 之间的时间差：向量化要求各段的时间相等，f+delta_f 得到各段的真实时间
+%       (removed since 20171112) number_vectors: The number of points contained in X when vectorizing the calculation
+%       (removed since 20171112) delta_f:        The time difference between each segment of the vectorization and the input time f: Vectorization requires that the time of each segment is equal, f+delta_f is the real time of each segment
 %
 %   Output:
-%       Xdot:       与输入的 X 相同维数的向量
-%
+%       Xdot
 %
 %   注意：勿轻易修改，小的改动会导致小的数值误差，先前计算的轨道库的精度就会受到影响
+%   Note: Do not modify it lightly. Small changes will lead to small numerical errors, and the accuracy of the previously calculated orbital library will be affected.
 %
 % 	created by PH at 2014-04-21:1842: 从 HaloOde 修改而来，以后都调用这个
 % 	last modified by PH at 2014-08-12:1247 完善注释；增加对向量输入的支持（未验证）

@@ -3,11 +3,16 @@
 # Multiple Shooting Method
 A brief review of literatures can be found [here](multiple-shooting-method.md).
 
+# How to Run
+Check demo codes in `./demos/`.
+Some demos depend on the correct SPICE/MICE installation.
+This repo only contains a linux mice intance at `./ephemeris/mice_linux/`, and you need to switch proper [installations of Win or macOS if needed](https://naif.jpl.nasa.gov/naif/).
+
 # Code Structure
 | Name | Description |
 | -----|-------------|
 `./common/` | common files
-`./demos/` | demos
+`./demos/` | demo codes
 `./ephemeris/` | Ephemeris dynamic model using [SPICE/MICE](https://naif.jpl.nasa.gov/naif/) toolbox; some frame kernels.
 `./figs/` | figures
 `./halo/` | Halo orbit related

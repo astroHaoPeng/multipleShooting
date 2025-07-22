@@ -1,5 +1,7 @@
 %Demonstration of generating Halo orbit in the Sun-Earth/Moon CRTBP
 %
+% `Demo_01_SunEarthMoon_Halo_CRTBP.m`: Generate Halo orbit in Sun-Earth CRTBP model using third-order approximation and simple shooting method.
+%
 % 1. 3rd order approximation of Halo
 % 2. simple shooting, vary two of three nonzero components in 
 %    initial contion[x0, 0, z0, 0, vy0, 0], but default we keep z0 fixed.
@@ -9,11 +11,11 @@
 % see HaloShooting.m
 
 
-%%
-addpath('../halo');
-addpath('../rtbp');
-addpath('../');
-clear;
+%% add necessary paths
+tmpExcludingExtension = {'.git', '.svn'}; % to exclude paths containing these extensions
+tmpAllPaths = strsplit(genpath('../'), pathsep); % all paths
+tmpAllPathsFiltered = strjoin(tmpAllPaths(~contains(tmpAllPaths, tmpExcludingExtension)), pathsep); % filtering the path
+addpath(tmpAllPathsFiltered);
 
 %% define constants
 
@@ -26,17 +28,18 @@ lengthUnit = 149.60e9; % [m] % https://nssdc.gsfc.nasa.gov/planetary/factsheet/e
 timeUnit = sqrt( (lengthUnit/1e3)^3 / (gmSun+gmEarth+gmMoon) ); % [s]
 velocityUnit = lengthUnit / timeUnit; % [m/s]
 mu = ( gmEarth + gmMoon ) / ( gmSun + gmEarth + gmMoon );
+mu = 0.00001
 disp('# In Sun-Earth/Moon system...');
 
 
 %% generate Halo in CRTBP
 
 %
-% xL1 = LibrationPoint(mu, 'L1'); location = 'L1';
-xL2 = LibrationPoint(mu, 'L2'); location = 'L2';
+xL1 = LibrationPoint(mu, 'L1'); location = 'L1';
+% xL2 = LibrationPoint(mu, 'L2'); location = 'L2';
 
 % Halo orbit size Az
-amplitudeZ = 120000e3 / lengthUnit; % [LU]
+amplitudeZ = 220000e3 / lengthUnit; % [LU]
 % 3rd approximation
 initialPhase = pi;
 [X3,initialPeriod] = HaloThirdOrder(amplitudeZ,'Az',location,mu,initialPhase);

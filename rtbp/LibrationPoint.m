@@ -1,6 +1,8 @@
 function [x, y] = LibrationPoint(mu, Position)
 %% [x, y] = LibrationPoint(mu, Position)
-% 根据输入mu计算L1或者L2点的坐标，规一旋转坐标系下表示
+% Calculate the coordinates of point L1 or L2 in CR3BP, according to the input mu, and express it in a rotation coordinate system.
+%   Also support `L3`, `L4`, and `L5`.
+%   The algorithm is typical in any CR3BP textbook.
 %
 % last modified by PH at 2013-10-12:1046
 % last modified by PH at 2013-10-12:1046

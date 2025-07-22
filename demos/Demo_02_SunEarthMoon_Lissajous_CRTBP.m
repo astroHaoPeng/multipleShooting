@@ -1,10 +1,11 @@
-% NEED MORE COMMENTS
+% `Demo_02_SunEarthMoon_Lissajous_CRTBP.m`: Generate Lissajous orbit in Sun-Earth CRTBP model using third-order approximation and multiple shooting method.
 
-%%
-addpath('../lissajous');
-addpath('../rtbp');
-addpath('../');
-clear;
+
+%% add necessary paths
+tmpExcludingExtension = {'.git', '.svn'}; % to exclude paths containing these extensions
+tmpAllPaths = strsplit(genpath('../'), pathsep); % all paths
+tmpAllPathsFiltered = strjoin(tmpAllPaths(~contains(tmpAllPaths, tmpExcludingExtension)), pathsep); % filtering the path
+addpath(tmpAllPathsFiltered);
 
 %% define constants
 
@@ -61,6 +62,7 @@ end
 % PlotInitialState(@(t,X)DynamicRTBP(t,X,mu,0), initialEpoches, initialStates);
 
 %% shooting
+gcp(); % Open a parallel pool for `parfor`
 tic;
 [correctedInitialEpoches, correctedInitialStates, exitflag] = MultipleShooting(@(t,X)DynamicRTBP(t,X,mu,0), initialEpoches, initialStates);
 toc;

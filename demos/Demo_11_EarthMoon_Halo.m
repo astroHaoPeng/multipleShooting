@@ -1,4 +1,5 @@
 %Demonstration of multiple-shooting method to generate Halo orbits in the Earth-Moon system.
+% `Demo_11_EarthMoon_Halo.m`: Halo in both CRTBP and Moon-centered inertial frame.
 %
 % 1. generate 3rd order approximation of Halo orbit
 % 2. shoot Halo in CRTBP
@@ -9,14 +10,11 @@
 % using corresponding frame kernels 'SE_EarthCenteredRotation.fk', 'EarthCenteredInertial.fk'
 
 
-%%
-addpath('../ephemeris','-begin');
-addpath('../halo','-begin');
-addpath('../rtbp','-begin');
-addpath('../common','-begin');
-addpath('../','-begin');
-clear;
-% parpool;
+%% add necessary paths
+tmpExcludingExtension = {'.git', '.svn'}; % to exclude paths containing these extensions
+tmpAllPaths = strsplit(genpath('../'), pathsep); % all paths
+tmpAllPathsFiltered = strjoin(tmpAllPaths(~contains(tmpAllPaths, tmpExcludingExtension)), pathsep); % filtering the path
+addpath(tmpAllPathsFiltered);
 
 %% define constants
 
@@ -128,6 +126,7 @@ fcn = @(t,X)DynamicEphemerisInertial(t,X,'Moon',{'Sun','Venus','Mercury','Earth'
 positionTolerance = 0.01; % [km]
 velocityTolerance = 0.0001; % [km/s]
 odeOptions = odeset('AbsTol',1e-9,'RelTol',1e-9);
+gcp(); % Open a parallel pool for `parfor`
 tic;
 [correctedInitialEpoches, correctedInitialStates, exitflag] = MultipleShooting(fcn, initialEphmerisEpoches, initialEphemerisStatesECI, positionTolerance, velocityTolerance, odeOptions);
 toc;
